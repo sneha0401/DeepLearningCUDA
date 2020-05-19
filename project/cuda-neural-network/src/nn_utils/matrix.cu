@@ -23,7 +23,8 @@ void Matrix::allocateCUDAMemeory(){
 
 void Matrix::allocteHostMemory(){
 	if(!host_allocated) {
-		data_host = std::shared_ptr<float>(new float[shape.x * shape.y],														[&](float* ptr){delete[] ptr;});
+		data_host = std::shared_ptr<float>(new float[shape.x * shape.y],
+											[&](float* ptr){delete[] ptr;});
 		host_allocated = true;
 	}
 }

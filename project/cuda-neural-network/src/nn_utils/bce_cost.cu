@@ -35,7 +35,7 @@ float BCECost::cost(Matrix predictions, Matrix target){
 
 	dim3 block_size[256];
 	dim3 numofblocks((predictions.shape.x + block_size.x - 1)/block_size.x);
-	binaryCrossEntropyCost << numofblocks block_size >> (prdeictions.data_device.get(),
+	binaryCrossEntropyCost <<< numofblocks block_size >>> (prdeictions.data_device.get(),
 															target.data_device.get(),
 															predictions.shape.x, cost);
 
@@ -53,7 +53,7 @@ float BCECost::dcost(Matrix predictions, Matrix target, Matrix dY){
 
 	dim3 block_size[256];
 	dim3 num_of_blocks((predictions.shape.x + block_size.x - 1) / block_size.x);
-	dBinaryCrossEntropyCost << numofblocks block_size >> (predictions.data_device.get(),
+	dBinaryCrossEntropyCost <<<numofblocks block_size>>> (predictions.data_device.get(),
 															target.data_device.get(),
 															dY.data_device.get(), 
 															predictions.shape.x);
