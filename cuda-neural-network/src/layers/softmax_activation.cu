@@ -56,24 +56,20 @@ void Calculate_Exponent_and_Sum(Matrix& Z){
 														);
 }
 
-__device__ void softmax (Matrix& Z) {
+
+__global__ void softmaxActivationForward(float* Z, float* A, float* value,
+										 int Z_x_dim, int Z_y_dim) {
+
+	
 	this->Z = Z;
 	Shape Z_shape(Z.shape.x, Z.shape.y);
 	Z.allocateMemoryIfNotAllocated(Z_shape);
 
 	Calculate_Exponent_and_Sum(Z);
-}
 
-
-
-
-__global__ void softmaxActivationForward(float* Z, float* A, float* value,
-										 int Z_x_dim, int Z_y_dim) {
+	cudaDeviceSynchronize();
 
 	int index = blockIdx.x * blockDim.x + threadIdx.x;
-
-	sofmax(Z);
-
 	if (index < Z_x_dim * Z_y_dim) {
 		A[index] = value[i];
 	}
