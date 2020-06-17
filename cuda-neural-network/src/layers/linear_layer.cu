@@ -8,23 +8,24 @@
 
 __global__ void linearLayerForward(float* W, float* A, float* Z, flaot* b, 
 									int W_x_dim, int W_y_dim,
-									int A_x_dim, int A_y_dim) 
+									int A_x_dim, int A_y_dim) {
 
-	int row = blockIdx.y * blockDim.y + threadIdx.y;
-	int column = blockIdx.x * blockDim.x + threadIdx.x;
+ 	int row = blockIdx.y * blockDim.y + threadIdx.y; //nth row
+	int column = blockIdx.x * blockDim.x + threadIdx.x; //nth column
 
-	int Z_x_dim = A_x_dim;
-	int Z_y_dim = W_y_dim;
+	int Z_x_dim = A_x_dim; //number of columns
+	int Z_y_dim = W_y_dim; //number of rows
 
-	float Z_value =0;
+	float Z_value =0; //output
 
 	if(row < Z_y_dim && col < Z_x_dim) {
 		for (int i = 0; i< W_x_dim; i++) {
-			Z_value += W[row * W_x_dim + i] * A[i * A_x_dim + col];
+			Z_value += W[row * W_x_dim + i] * A[i * A_x_dim + col]; //weights * input
 		}
-		Z[row * Z_x_dim + col] = Z_value + b[row];
-	} 
-}
+		Z[row * Z_x_dim + col] = Z_value + b[row]; // adding bias to get the output
+	}
+} 
+
 
 __global__ void linearLayerBackprop(float* W, float* dZ, float *dA,
 									int W_x_dim, int W_y_dim, 
@@ -35,16 +36,16 @@ __global__ void linearLayerBackprop(float* W, float* dZ, float *dA,
 
 	//W is treated as tranposed
 
-	int dA_x_dim = dZ_x_dim;
-	int dA_y_dim = W_x_dim;
+	int dA_x_dim = dZ_x_dim; //number of columns
+	int dA_y_dim = W_x_dim; //number of rows
 
-	float dA_value = 0.0f;
+	float dA_value = 0.0f; //differential value of input
 
 	if (row < dA_y_dim && col < dA_x_dim){
 		for (int i = 0; i < W_y_dim; i++){
-			dA_value = W[i * W_x_dim + row] * dZ[i * dZ_x_dim + col];
+			dA_value = W[i * W_x_dim + row] * dZ[i * dZ_x_dim + col]; //differential value of input
 		}
-		dA[row * dA_x_dim + col] = dA_value;
+		dA[row * dA_x_dim + col] = dA_value; //pushing value to the output matrix
 	}
 }
 
@@ -79,7 +80,7 @@ __global__ void linearLayerUpdateBias(  float* dZ, float* b,
 	if (index < dZ_x_dim * dZ_y_dim) {
 		int dZ_x = index % dZ_x_dim;
 		int dZ_y = index / dZ_x_dim;
-		atomicAdd(&b[dZ_y], - learning_rate * (dZ[dZ_y * dZ_x_dim + dZ_x] / dZ_x_dim));
+		atomicAdd(&b[dZ_y], - learning_rate * (dZ[dZ_y * dZ_x_dim + dZ_x] / dZ_x_dim)); //atomicAdd is used as there is only one bias for the entire row
 	}
 }
 
@@ -127,7 +128,7 @@ void LinearLayer::computeAndStoreLayerOutput(Matrix& A){
 														Z.data_device.get(),
 														b.data_device.get(),
 														W.shape.x, W.shape.y,
-														A.shape.x, A.shape.y),
+														A.shape.x, A.shape.y);
 }
 
 Matrix& LinearLayer::backprop(Matrix& dZ, float learning_rate) {

@@ -16,6 +16,7 @@ __global__ void sigmoidActivationForward(float* Z, float* A,
 	}
 }
 
+
 __global__ void sigmoidActivationBackprop(float* Z, float* dA, float* dZ,
 										  int Z_x_dim, int Z_y_dim) {
 
