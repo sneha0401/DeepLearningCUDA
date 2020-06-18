@@ -2,7 +2,7 @@
 
 #include "nn_layer.hh"
 
-class SigmoidActivation : public NNLayer {
+class SoftmaxActivation : public NNLayer {
 private:
 	Matrix A;
 	

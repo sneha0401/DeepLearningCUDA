@@ -5,9 +5,7 @@
 #include <vector>
 
 
-__device__ void calculate_exponent_and_sum(float* value, float* sum, float* Z, int Z_x_dim, int Z_y_dim){
-
-	value.allocateMemoryIfNotAllocated(Z.shape.y * Z.shape.x);
+__global__ void calculate_exponent_and_sum(float* value, float* sum, float* Z, int Z_x_dim, int Z_y_dim){
     // Find unique ID of each thread row and thread column
 	int thread_row = blockIdx.y * blockDim.y + threadIdx.y;
 	int thread_col = blockIdx.x * blockDim.x + threadIdx.x;
@@ -41,8 +39,10 @@ __device__ void calculate_exponent_and_sum(float* value, float* sum, float* Z, i
 }
 
 
-__device__ void Calculate_Exponent_and_Sum(Matrix& Z){
+void Calculate_Exponent_and_Sum(Matrix& Z){
 	
+	value.allocateMemoryIfNotAllocated(Z.shape.x * Z.shape.y);
+
 	dim3 block_size(128, 128);
 	dim3 num_of_blocks( (Z.shape.x + block_size.x - 1)/ block_size.x,
 						(Z.shape.y + block_size.y - 1)/ block_size.y);
