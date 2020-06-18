@@ -9,6 +9,9 @@ private:
 	Matrix Z;
 	Matrix dZ;
 
+	Matrix value;
+	float sum[Z.shape.y];
+
 public:
 	Softmaxctivation(std::string name);
 	~SoftmaxActivation();
