@@ -61,14 +61,6 @@ __global__ void softmaxActivationForward(float* Z, float* A, float* value,
 										 int Z_x_dim, int Z_y_dim) {
 
 	
-	this->Z = Z;
-	Shape Z_shape(Z.shape.x, Z.shape.y);
-	Z.allocateMemoryIfNotAllocated(Z_shape);
-
-	Calculate_Exponent_and_Sum(Z);
-
-	cudaDeviceSynchronize();
-
 	int index = blockIdx.x * blockDim.x + threadIdx.x;
 	if (index < Z_x_dim * Z_y_dim) {
 		A[index] = value[i];
@@ -90,12 +82,16 @@ SoftmaxActivation::SoftmaxActivation(std::string name) {
 	this->name = name;
 }
 
-SigmoidActivation::~SigmoidActivation()
+SoftmaxActivation::~SoftmaxActivation()
 { }
 
 Matrix& SoftmaxActivation::forward(Matrix& Z) {
 	this->Z = Z;
 	A.allocateMemoryIfNotAllocated(Z.shape);
+
+	Calculate_Exponent_and_Sum(Z);
+
+	cudaDeviceSynchronize();
 
 	dim3 block_size(256);
 	dim3 num_of_blocks((Z.shape.y * Z.shape.x + block_size.x - 1) / block_size.x);
