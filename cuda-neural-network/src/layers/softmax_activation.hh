@@ -17,5 +17,6 @@ public:
 	~SoftmaxActivation();
 
 	Matrix& forward(Matrix& Z);
-	Matrix backprop(Matrix& dA, float learning_rate = 0.01);
+	Matrix& backprop(Matrix& dA, float learning_rate = 0.01);
+	void Calculate_Exponent_and_Sum(Matrix& Z);
 };
