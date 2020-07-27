@@ -23,4 +23,4 @@ public:
 	void addLayer(NNLayer *layer);
 	std::vector<NNLayer*> getLayers() const;
 
-};w
+};

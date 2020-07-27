@@ -39,9 +39,8 @@ __global__ void calculate_exponent_and_sum(float* value, float* sum, float* Z, i
 }
 
 
-void SoftmaxActivation::Calculate_Exponent_and_Sum(Matrix& Z){
+ Matrix& SoftmaxActivation::Calculate_Exponent_and_Sum(Matrix& Z){
 	
-	this->Z = Z;
 	value.allocateMemoryIfNotAllocated(Z.shape.x * Z.shape.y);
 
 	dim3 block_size(128, 128);

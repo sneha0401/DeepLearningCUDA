@@ -10,11 +10,11 @@
 
 #include "coordinates_dataset.hh"
 
-float computerAccuracy(const Matrix& predictions, const Matrix& targets);
+float computeAccuracy(const Matrix& predictions, const Matrix& targets);
 
 int main(){
 	
-	srand( time(Null));
+	srand( time(NULL));
 
 	CoordinatesDataset dataset(100, 21);
 	BCECost bce_cost;
@@ -26,10 +26,10 @@ int main(){
 	nn.addLayer(new SigmoidActivation("sigmoid_output"));
 
 	Matrix Y;
-	for(int epoch =0; epoch < 1001; epoch++) {
+	for (int epoch = 0; epoch < 1001; epoch++) {
 		float cost = 0.0;
 
-		for (int batch =0; batch < batch.getNumberofBatches() -1; batch++){
+		for (int batch = 0; batch < dataset.getNumOfBatches() - 1; batch++) {
 			Y = nn.forward(dataset.getBatches().at(batch));
 			nn.backprop(Y, dataset.getTargets().at(batch));
 			cost += bce_cost.cost(Y, dataset.getTargets().at(batch));

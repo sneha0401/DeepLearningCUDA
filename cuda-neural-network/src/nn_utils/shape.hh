@@ -1,7 +1,7 @@
 #pragma once
 
-struct Shape{
+struct Shape {
 	size_t x, y;
-	Shape(x=1, y=1);
 
-}
+	Shape(size_t x = 1, size_t y = 1);
+};
