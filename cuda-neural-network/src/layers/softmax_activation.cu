@@ -5,13 +5,17 @@
 #include <vector>
 
 
-__global__ void calculate_exponent_and_sum(float* value, float* sum, float* Z, int Z_x_dim, int Z_y_dim){
+__global__ void calculate_exponent_and_sum(float* value, float* Z, int Z_x_dim, int Z_y_dim){
     // Find unique ID of each thread row and thread column
 	int thread_row = blockIdx.y * blockDim.y + threadIdx.y;
 	int thread_col = blockIdx.x * blockDim.x + threadIdx.x;
     // Initialize max array to store maximum of each row
-    const int r = Z_y_dim;
-    float max_num[r] = {-9999};
+    //const int r = Z_y_dim;
+    Matrix shape_Y = Shape(Z.shape.y, 1);
+    Matrix max_num;
+    Matrix sum;
+	max_num.allocateMemoryIfNotAllocated(shape_Y);
+	sum.allocateMemoryIfNotAllocated(shape_Y);
     // Loop over the row
 	for (size_t i = 0; i < Z_x_dim; i++){
     // Make sure the index doesnt exceed the number of elements in matrix
@@ -37,6 +41,10 @@ __global__ void calculate_exponent_and_sum(float* value, float* sum, float* Z, i
     		sum[thread_row] += value[thread_row * Z_x_dim + i];
     	}
   	}
+
+  	if (thread_row < Z_x_dim){
+  		value[index] = value[index]/sum[thread_col];
+  	}
 }
 
 
@@ -48,7 +56,6 @@ void SoftmaxActivation::Calculate_Exponent_and_Sum(Matrix& Z){
 	dim3 num_of_blocks( (Z.shape.x + block_size.x - 1)/ block_size.x,
 						(Z.shape.y + block_size.y - 1)/ block_size.y);
 	calculate_exponent_and_sum<<<num_of_blocks, block_size>>>(value.data_device.get(),
-														sum.data_device.get(),
 														Z.data_device.get(),
 														Z.shape.x, Z.shape.y
 														);

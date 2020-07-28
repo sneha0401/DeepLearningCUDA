@@ -10,10 +10,9 @@ private:
 	Matrix dZ;
 
 	Matrix value;
-	float sum[Z.shape.y];
 
 public:
-	Softmaxctivation(std::string name);
+	SoftmaxActivation(std::string name);
 	~SoftmaxActivation();
 
 	Matrix& forward(Matrix& Z);
