@@ -17,7 +17,7 @@ public:
 		return exception_message;
 	} 
 
-	static void throwIfDeviceErrorsOcurred(const char* exception_message){
+	static void throwIfDeviceErrorsOccurred(const char* exception_message){
 		cudaError_t error = cudaGetLastError();
 		if (error!=cudaSuccess){
 			std::cerr << error << ": " << exception_message;

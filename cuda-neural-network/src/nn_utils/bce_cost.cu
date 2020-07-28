@@ -32,28 +32,29 @@ float BCECost::cost(Matrix predictions, Matrix target){
 
 	float* cost;
 	cudaMallocManaged(&cost, sizeof(float));
+	*cost = 0.0f;
 
-	dim3 block_size[256];
-	dim3 numofblocks((predictions.shape.x + block_size.x - 1)/block_size.x);
-	binaryCrossEntropyCost <<< numofblocks block_size >>> (prdeictions.data_device.get(),
+	dim3 block_size(256);
+	dim3 num_of_blocks((predictions.shape.x + block_size.x - 1)/block_size.x);
+	binaryCrossEntropyCost <<< num_of_blocks, block_size >>> (predictions.data_device.get(),
 															target.data_device.get(),
 															predictions.shape.x, cost);
 
 	cudaDeviceSynchronize();
 	NNException::throwIfDeviceErrorsOccurred("Cannot compute binary cross entropy cost.");
 
-	float cost_value = cost;
+	float cost_value = *cost;
 	cudaFree(cost);
 
 	return cost_value;
 }
 
-float BCECost::dcost(Matrix predictions, Matrix target, Matrix dY){
-	assert(predictions.shape.x == target.shape.x)
+Matrix BCECost::dCost(Matrix predictions, Matrix target, Matrix dY){
+	assert(predictions.shape.x == target.shape.x);
 
-	dim3 block_size[256];
+	dim3 block_size(256);
 	dim3 num_of_blocks((predictions.shape.x + block_size.x - 1) / block_size.x);
-	dBinaryCrossEntropyCost <<<numofblocks block_size>>> (predictions.data_device.get(),
+	dBinaryCrossEntropyCost <<<num_of_blocks, block_size>>> (predictions.data_device.get(),
 															target.data_device.get(),
 															dY.data_device.get(), 
 															predictions.shape.x);

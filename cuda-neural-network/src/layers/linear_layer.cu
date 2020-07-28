@@ -6,12 +6,12 @@
 #include "linear_layer.hh"
 #include "../nn_utils/nn_exception.hh"
 
-__global__ void linearLayerForward(float* W, float* A, float* Z, flaot* b, 
+__global__ void linearLayerForward(float* W, float* A, float* Z, float* b, 
 									int W_x_dim, int W_y_dim,
 									int A_x_dim, int A_y_dim) {
 
  	int row = blockIdx.y * blockDim.y + threadIdx.y; //nth row
-	int column = blockIdx.x * blockDim.x + threadIdx.x; //nth column
+	int col = blockIdx.x * blockDim.x + threadIdx.x; //nth column
 
 	int Z_x_dim = A_x_dim; //number of columns
 	int Z_y_dim = W_y_dim; //number of rows
@@ -29,10 +29,10 @@ __global__ void linearLayerForward(float* W, float* A, float* Z, flaot* b,
 
 __global__ void linearLayerBackprop(float* W, float* dZ, float *dA,
 									int W_x_dim, int W_y_dim, 
-									int dz_x_dim, int dZ_y_dim){
+									int dZ_x_dim, int dZ_y_dim){
 
 	int row = blockIdx.y * blockDim.y + threadIdx.y;
-	int column = blockIdx.x * blockDim.x + threadIdx.x;
+	int col = blockIdx.x * blockDim.x + threadIdx.x;
 
 	//W is treated as tranposed
 
@@ -51,11 +51,11 @@ __global__ void linearLayerBackprop(float* W, float* dZ, float *dA,
 
 __global__ void linearLayerUpdateWeights(   float* dZ, float* A, float* W,
 											int dZ_x_dim, int dZ_y_dim,
-											int A_x_dim, int_A_y_dim,
-											float learning rate) {
+											int A_x_dim, int A_y_dim,
+											float learning_rate) {
 
 	int row = blockIdx.y * blockDim.y + threadIdx.y;
-	int column = blockIdx.x * blockDim.x + threadIdx.x;
+	int col = blockIdx.x * blockDim.x + threadIdx.x;
 
 	// A is treated as transposed
 	int W_x_dim = A_y_dim;
@@ -91,23 +91,23 @@ void LinearLayer::initializeWeightsRandomly() {
 	std::default_random_engine generator;
 	std::normal_distribution<float> normal_distribution(0.0, 1.0);
 
-	for (int x = 0; y < W.shape; x++) {
-		for (int y =0; y < W.shape.y) {
-			W[ y * shape.x + x] = normal_distribution(generator) * weights_init_threshold;
+	for (int x = 0; x < W.shape.x; x++) {
+		for (int y =0; y < W.shape.y; y++) {
+			W[ y * W.shape.x + x] = normal_distribution(generator) * weights_init_threshold;
 		}
 	}
-	W.copyHosttoDevice();
+	W.copyHostToDevice();
 }
 
 void LinearLayer::initializeBiasWithZeros() {
 	for (int x =0 ;x < W.shape.y; x++){
 		b[x] = 0;
 	}
-	b.copyHosttoDevice;
+	b.copyHostToDevice();
 }
 
 Matrix& LinearLayer::forward(Matrix& A){
-	assert(W.shape == A.shape.y);
+	assert(W.shape.x == A.shape.y);
 
 	this->A = A;
 	Shape Z_shape(A.shape.x, W.shape.y);
