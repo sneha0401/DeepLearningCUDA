@@ -10,6 +10,8 @@ private:
 	Matrix dZ;
 
 	Matrix value;
+	Matrix max_num;
+    Matrix sum;
 
 public:
 	SoftmaxActivation(std::string name);
