@@ -24,14 +24,14 @@ __global__ void softmax(float* input, float* buffer, float* max_num, int Z_x_dim
 int main()
 {
 	
-	Matrix Z[25][25], i ,j;
+	float Z[25][25], i ,j;
  	for( i = 0; i < 25; ++i){
   		for( j = 0;  j < 25; ++j){
      		Z[i][j] = rand();
      	}
   	}
 
-  	Matrix buffer[25][25];
+  	float buffer[25][25];
  	
  	for( i = 0; i < 25; ++i){
  		for( j = 0; j < 25; ++j)
