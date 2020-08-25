@@ -24,28 +24,31 @@ __global__ void softmax(float* input, float* buffer, float* max_num, int Z_x_dim
 int main()
 {
 	
-	float Z[25][25], i ,j;
- 	for( i = 0; i < 25; ++i){
-  		for( j = 0;  j < 25; ++j){
-     		Z[i][j] = rand();
-     	}
-  	}
+	float Z[25*25];
+	int i ,j;
+ 	for( i = 0; i < 25*25; ++i){
+  		Z[i] = rand();
+    }
 
-  	float buffer[25][25];
- 	
- 	for( i = 0; i < 25; ++i){
- 		for( j = 0; j < 25; ++j)
-    		std::cout<<Z[i][j]<<'\t';
+  	float buffer[25*25];
+
+ 	for( i = 0; i < 25*25; ++i){
+ 		std::cout<<Z[i]<<'\t';
    		std::cout<<'\n';
  	}
+
  	float *max_num = new float[25];
 
  	softmax<<<2, 20>>>(Z, buffer, max_num, 25, 25);
- 	
+/*
  	for(i = 0; i < 10; i++){
  		for( j = 0; j < 3; ++j)
     		std::cout<<buffer[i][j]<<'\t';
 	}
+*/
+ 	for(i = 0; i < 25; i++){
+ 		std::cout<<max_num[i]<<std::endl;
+ 	}
  	return 0;
 
 }
