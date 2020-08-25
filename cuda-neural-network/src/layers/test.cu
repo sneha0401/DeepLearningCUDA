@@ -42,7 +42,7 @@ int main()
 
  	float *max_num = new float[25];
 
- 	float Z_d, buffer_d, max_num_d;
+ 	float *Z_d, *buffer_d, *max_num_d;
  	cudaMalloc((void **)&Z_d, 25*25*sizeof(float));
  	cudaMalloc((void **)&buffer_d, 25*25*sizeof(float));
  	cudaMalloc((void **)&max_num_d, 25*sizeof(float));
