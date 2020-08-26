@@ -5,80 +5,79 @@
 #include <vector>
 
 
-__global__ void calculate_exponent_and_sum(float* value, float* sum, float* max_num, float* Z, int Z_x_dim, int Z_y_dim){
-    // Find unique ID of each thread row and thread column
-	int thread_row = blockIdx.y * blockDim.y + threadIdx.y;
-	int thread_col = blockIdx.x * blockDim.x + threadIdx.x;
-    // Initialize max array to store maximum of each row
-    // Loop over the row
-	for (size_t i = 0; i < Z_x_dim; i++){
-    // Make sure the index doesnt exceed the number of elements in matrix
-    	if(thread_row * Z_x_dim + i < Z_x_dim * Z_y_dim){
-      	// If it is greater, put if in the max for the corresponding row.
-    		if(Z[thread_row * Z_x_dim + i] > max_num[thread_row]){
-      			max_num[thread_row] = Z[thread_row * Z_x_dim + i];
-      		}
-    	}
-  	}
-  	// Get unique index id for each thread
-  	int index = thread_row * Z_x_dim + thread_col;
-  	// Make sure that the thread_col is not greater than the number of rows in matrix
-  	if (thread_col < Z_y_dim){
-    	// Calculate exponent by subtracting each value by the max of that row
-  		value[index] = expf(Z[index] - max_num[thread_row]);
-  	}
-  	// Populate sum array
-  	for(size_t i = 0; i < Z_x_dim; i++){
-    	// Make sure that the row ID is not greater than the number of rows in matrix
-    	if(thread_row < Z_y_dim){
-      	// populate each rows sum
-    		sum[thread_row] += value[thread_row * Z_x_dim + i];
-    	}
-  	}
-
-  	if (thread_row < Z_x_dim){
-  		value[index] = value[index]/sum[thread_col];
-  	}
-}
-
-
-void SoftmaxActivation::Calculate_Exponent_and_Sum(Matrix& Z){
+__global__ void softmaxActivationForward(float* input, float* A, float* max_num, float* row_sum, int Z_x_dim, int Z_y_dim) {
+    
+	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 	
-	value.allocateMemoryIfNotAllocated(Z.shape.x * Z.shape.y);
-	Matrix shape_Y = Shape(Z.shape.y, 1);
-	max_num.allocateMemoryIfNotAllocated(shape_Y);
-	sum.allocateMemoryIfNotAllocated(shape_Y);
+	for (int i = 0; i < Z_y_dim; i++) {
+		max_num[i] = -INFINITY;
+	}
 
-	dim3 block_size(128, 128);
-	dim3 num_of_blocks( (Z.shape.x + block_size.x - 1)/ block_size.x,
-						(Z.shape.y + block_size.y - 1)/ block_size.y);
-	calculate_exponent_and_sum<<<num_of_blocks, block_size>>>(value.data_device.get(),
-														sum.data_device.get(),
-														max_num.data_device.get(),
-														Z.data_device.get(),
-														Z.shape.x, Z.shape.y
-														);
+	if (idx < Z_y_dim ) {
+		for (int i = 0; i < Z_x_dim; i++){ 
+			if(max_num[idx] < input[idx * Z_x_dim + i] ){
+				max_num[idx] = input[idx * Z_x_dim + i];
+			}
+			
+		}
+	}
+	__syncthreads();
+
+	if(idx < Z_x_dim){
+		for(size_t i = 0; i < Z_x_dim; i++)
+			A[idx * Z_y_dim + i] = expf(input[idx * Z_y_dim + i] - max_num[idx]);
+	}
+
+	if(idx < Z_x_dim){
+		for(size_t i = 0; i < Z_x_dim; i++)
+			row_sum[idx] += A[idx * Z_y_dim + i];
+		
+	}
+	if(idx < Z_x_dim){
+		for(size_t i = 0; i < Z_x_dim; i++)
+			A[idx * Z_y_dim + i] = A[idx * Z_y_dim + i] / row_sum[idx];
+	}
+
+
+}
+/*
+void SoftmaxActivation::softmax_act(Matrix& Z){
+	
+	A.allocateMemoryIfNotAllocated(Z.shape.x * Z.shape.y);
+	Shape shape_Y = Shape(Z.shape.y, 1);
+	max_num.allocateMemoryIfNotAllocated(shape_Y);
+	row_sum.allocateMemoryIfNotAllocated(shape_Y);
+
+	dim3 block_size(256);
+	dim3 num_of_blocks((Z.shape.y * Z.shape.x + block_size.x - 1) / block_size.x);
+
+	softmax<<<num_of_blocks, block_size>>>(Z.data_device.get(),
+											A.data_device.get(),
+											max_num.data_device.get(),
+											row_sum.data_device.get(),
+											Z.shape.x, Z.shape.y
+											);
 }
 
 
-__global__ void softmaxActivationForward(float* Z, float* A, float* value,
+__global__ void softmaxActivationForward(float* Z, float* A, float* A,
 										 int Z_x_dim, int Z_y_dim) {
 
 	
 	int index = blockIdx.x * blockDim.x + threadIdx.x;
 	if (index < Z_x_dim * Z_y_dim) {
-		A[index] = value[index];
+		A[index] = A[index];
 	}
 }
-    	
+*/    	
   	
 __global__ void softmaxActivationBackprop(float* Z, float* dA, float* dZ,
-										  float* value, int Z_x_dim, int Z_y_dim) {
+										  float* A, int Z_x_dim, int Z_y_dim) {
 
 	int index = blockIdx.x * blockDim.x + threadIdx.x;
 
 	if (index < Z_x_dim * Z_y_dim) {
-		dZ[index] = dA[index] * value[index] * (1 - value[index]);
+		dZ[index] = dA[index] * A[index] * (1 - A[index]);
 	}
 }
 
@@ -92,16 +91,19 @@ SoftmaxActivation::~SoftmaxActivation()
 Matrix& SoftmaxActivation::forward(Matrix& Z) {
 	this->Z = Z;
 	A.allocateMemoryIfNotAllocated(Z.shape);
+	Shape shape_Y = Shape(Z.shape.y, 1);
+	max_num.allocateMemoryIfNotAllocated(shape_Y);
+	row_sum.allocateMemoryIfNotAllocated(shape_Y);
 
-	Calculate_Exponent_and_Sum(Z);
-
-	cudaDeviceSynchronize();
-
+	
 	dim3 block_size(256);
 	dim3 num_of_blocks((Z.shape.y * Z.shape.x + block_size.x - 1) / block_size.x);
 
-	softmaxActivationForward<<<num_of_blocks, block_size>>>(Z.data_device.get(), A.data_device.get(),
-														   	value.data_device.get(), Z.shape.x, Z.shape.y);
+	softmaxActivationForward<<<num_of_blocks, block_size>>>(Z.data_device.get(),
+															A.data_device.get(),
+															max_num.data_device.get(),
+															row_sum.data_device.get(),
+															Z.shape.x, Z.shape.y);
 	NNException::throwIfDeviceErrorsOccurred("Cannot perform softmax forward propagation.");
 
 	return A;
@@ -113,7 +115,7 @@ Matrix& SoftmaxActivation::backprop(Matrix& dA, float learning_rate) {
 	dim3 block_size(256);
 	dim3 num_of_blocks((Z.shape.y * Z.shape.x + block_size.x - 1) / block_size.x);
 	softmaxActivationBackprop<<<num_of_blocks, block_size>>>(Z.data_device.get(), dA.data_device.get(),
-															 dZ.data_device.get(), value.data_device.get(),
+															 dZ.data_device.get(), A.data_device.get(),
 															 Z.shape.x, Z.shape.y);
 	NNException::throwIfDeviceErrorsOccurred("Cannot perform softmax back propagation");
 

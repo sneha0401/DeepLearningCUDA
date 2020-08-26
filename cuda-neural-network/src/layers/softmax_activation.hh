@@ -9,9 +9,8 @@ private:
 	Matrix Z;
 	Matrix dZ;
 
-	Matrix value;
 	Matrix max_num;
-    Matrix sum;
+    Matrix row_sum;
 
 public:
 	SoftmaxActivation(std::string name);
@@ -19,5 +18,5 @@ public:
 
 	Matrix& forward(Matrix& Z);
 	Matrix& backprop(Matrix& dA, float learning_rate = 0.01);
-	void Calculate_Exponent_and_Sum(Matrix& Z);
+	void softmax_act(Matrix& Z);
 };
