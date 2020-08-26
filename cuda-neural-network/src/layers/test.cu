@@ -6,20 +6,26 @@
 __global__ void softmax(float* input, float* buffer, float* max_num, int Z_x_dim, int Z_y_dim) {
   	assert(input);
 
-	int row = blockIdx.x * blockDim.x + threadIdx.x;
-	//printf("%d \n", row);
+	int idx = blockIdx.x * blockDim.x + threadIdx.x;
+	//printf("%d \n", idx);
 	//int col = blockIdx.x * blockDim.x + threadIdx.x;
   	// assert(input_len >= 0);  Not needed
 	for (int i = 0; i < Z_y_dim; i++) {
 		max_num[i] = -INFINITY;
 	}
 
-	if (row < Z_y_dim ) {
+	if (idx < Z_y_dim ) {
 		for (int i = 0; i < Z_x_dim; i++){ 
-			if(max_num[row] < input[row * Z_x_dim + i] ){
-				max_num[row] = input[row * Z_x_dim + i];
+			if(max_num[idx] < input[idx * Z_x_dim + i] ){
+				max_num[idx] = input[idx * Z_x_dim + i];
 			}
 			
+		}
+	}
+
+	if (idx < Z_y_dim*Z_x_dim){
+		for (int i = 0; i < Z_y_dim * Z_x_dim; i++){
+			buffer[idx * Z_x_dim + i] = input[idx * Z_x_dim + i] - max_num[idx] ;
 		}
 	}
 }
@@ -28,16 +34,12 @@ int main()
 {
 	
 	float Z[25*25];
-	int i ,j;
+	int i ;
  	for( i = 0; i < 25*25; ++i){
-		Z[i] = rand();
+		Z[i] = i+1;
     }
 
   	float buffer[25*25];
-
- 	for( i = 0; i < 25*25; ++i){
-  		buffer[i] = rand();
-    }
 
  	float *max_num = new float[25];
 
@@ -54,16 +56,20 @@ int main()
 	dim3 num_of_blocks((25 * 25 + block_size.x - 1) / block_size.x);
 
  	softmax<<<num_of_blocks, block_size>>>(Z_d, buffer_d, max_num_d, 25, 25);
-/*
- 	for(i = 0; i < 10; i++){
- 		for( j = 0; j < 3; ++j)
-    		std::cout<<buffer[i][j]<<'\t';
+	
+	cudaMemcpy(buffer, buffer_d, 25*25*sizeof(float), cudaMemcpyDeviceToHost);
+	cudaMemcpy(max_num, max_num_d, 25*sizeof(float), cudaMemcpyDeviceToHost);
+ 	std::cout<<"buffer"<<std::endl;
+ 	
+	for(i = 0; i < 25*25; i++){
+    	std::cout<<buffer[i]<<std::endl;
 	}
-*/
- 	cudaMemcpy(max_num, max_num_d, 25*sizeof(float), cudaMemcpyDeviceToHost);
- 	for(i = 0; i < 25; i++){
- 		std::cout<<max_num[i]<<std::endl;
- 	}
+	std::cout<<"max num"<<std::endl;
+ 	
+	for(i = 0; i < 25; i++){
+    	std::cout<<max_num[i]<<std::endl;
+	}
+
  	return 0;
 
 }
